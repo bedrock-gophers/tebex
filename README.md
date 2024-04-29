@@ -1,4 +1,4 @@
-Tebex: Tebex Library for Dragonfly
+# Tebex
 
 Tebex is a library designed for Dragonfly servers, facilitating integration with the Tebex platform for managing online stores. With Tebex, you can seamlessly connect your Dragonfly server with your Tebex store, enabling features such as in-game purchases, virtual currency, and more.
 Getting Started

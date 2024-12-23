@@ -6,7 +6,7 @@ import (
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/sirupsen/logrus"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -26,7 +26,7 @@ func (c *Client) ExecuteCommands(p *player.Player) {
 	}
 	err := c.get("queue/online-commands/"+p.XUID(), &result)
 	if err != nil {
-		c.log.Errorf("failed to query pending online commands: %v", err)
+		c.log.Error("failed to query pending online commands: %v", err)
 		return
 	}
 
@@ -41,11 +41,11 @@ func (c *Client) ExecuteCommands(p *player.Player) {
 		time.AfterFunc(time.Second*time.Duration(entry.Conditions.Delay), func() {
 			err = c.processCommand(entry.Command, p.Name(), p.XUID())
 			if err != nil {
-				c.log.Errorf("failed to execute online command: %s", err)
+				c.log.Error("failed to execute online command: %s", err)
 			}
 			err = c.delete("queue", map[string]any{"ids": []int{entry.ID}})
 			if err != nil {
-				c.log.Errorf("failed to delete processed online command: %s", err)
+				c.log.Error("failed to delete processed online command: %s", err)
 			}
 		})
 		if entry.Conditions.Delay == 0 {
@@ -54,7 +54,7 @@ func (c *Client) ExecuteCommands(p *player.Player) {
 	}
 	if len(ids) > 0 {
 		if err = c.delete("queue", map[string]any{"ids": ids}); err != nil {
-			c.log.Errorf("failed to delete processed online commands: %s", err)
+			c.log.Error("failed to delete processed online commands: %s", err)
 		}
 	}
 }
@@ -79,7 +79,7 @@ func (c *Client) ExecuteOfflineCommands() {
 	}
 	err := c.get("queue/offline-commands", &result)
 	if err != nil {
-		c.log.Errorf("failed to query pending offline commands: %v", err)
+		c.log.Error("failed to query pending offline commands: %v", err)
 		return
 	}
 
@@ -89,11 +89,11 @@ func (c *Client) ExecuteOfflineCommands() {
 			time.AfterFunc(time.Second*time.Duration(entry.Conditions.Delay), func() {
 				err = c.processCommand(entry.Command, entry.Player.Name, entry.Player.UUID)
 				if err != nil {
-					c.log.Errorf("failed to execute offline command: %s", err)
+					c.log.Error("failed to execute offline command: %s", err)
 				}
 				err = c.delete("queue", map[string]any{"ids": []int{entry.ID}})
 				if err != nil {
-					c.log.Errorf("failed to delete processed offline command: %s", err)
+					c.log.Error("failed to delete processed offline command: %s", err)
 				}
 				fmt.Println("deleted")
 			})
@@ -101,20 +101,20 @@ func (c *Client) ExecuteOfflineCommands() {
 		}
 		err = c.processCommand(entry.Command, entry.Player.Name, entry.Player.UUID)
 		if err != nil {
-			c.log.Errorf("failed to execute offline command: %s", err)
+			c.log.Error("failed to execute offline command: %s", err)
 		}
 		ids = append(ids, entry.ID)
 	}
 	if len(ids) > 0 {
 		if err = c.delete("queue", map[string]any{"ids": ids}); err != nil {
-			c.log.Errorf("failed to delete processed offline commands: %s", err)
+			c.log.Error("failed to delete processed offline commands: %s", err)
 		}
 	}
 }
 
 // Source is a dummy source to be used for command execution.
 type Source struct {
-	log *logrus.Logger
+	log *slog.Logger
 }
 
 // Name ...
@@ -135,7 +135,7 @@ func (Source) World() *world.World {
 // SendCommandOutput ...
 func (d Source) SendCommandOutput(output *cmd.Output) {
 	for _, e := range output.Errors() {
-		d.log.Errorf("error whilst executing commands: %v", e)
+		d.log.Error("error whilst executing commands: %v", e)
 	}
 }
 
@@ -155,6 +155,6 @@ func (c *Client) processCommand(commandLine, player, id string) error {
 		),
 		"{username}",
 		player,
-	), name), " "), Source{log: c.log})
+	), name), " "), Source{log: c.log}, nil)
 	return nil
 }

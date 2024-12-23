@@ -2,8 +2,8 @@ package tebex
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/square/go-jose.v2/json"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -17,7 +17,7 @@ type Client struct {
 	secret string
 	period time.Duration
 
-	log *logrus.Logger
+	log *slog.Logger
 	c   *http.Client
 
 	s chan struct{}
@@ -25,7 +25,7 @@ type Client struct {
 
 // NewClient creates a new Client with the given secret. The *http.Client will be defaulted to http.DefaultClient.
 // The period provided will be used to determine how often the client will check for new offline commands.
-func NewClient(log *logrus.Logger, period time.Duration, secret string) *Client {
+func NewClient(log *slog.Logger, period time.Duration, secret string) *Client {
 	c := &Client{
 		s: make(chan struct{}),
 		c: http.DefaultClient,
